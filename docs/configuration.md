@@ -1,5 +1,7 @@
 # Configuration
 
+For first-time setup, see [Generate and deploy the telemetry TOML and configure the station INI](configuration-setup.md).
+
 The collector uses `~/.config/home-telemetry/config.toml` by default. Set `HOME_TELEMETRY_CONFIG` or pass `--config PATH` before the command. Start with the [public example](../deploy/home-telemetry.toml.example). A relative database path is resolved from the configuration file’s directory. The default database is `~/.local/share/home-telemetry/telemetry.db`.
 
 Each `[[providers]]` entry has a unique `id` and declared `type`. Set a stable `device_id` for the logical device. It defaults to the provider ID and must be unique across configured providers. IDs contain up to 64 letters, numbers, underscores, or hyphens and start with a letter or number. Use `display_name` and `room` for public labels. A multi-device plugin must emit a stable ID for each physical device. The database identifies each device by provider ID and device ID. Use a new provider ID when replacing its type.

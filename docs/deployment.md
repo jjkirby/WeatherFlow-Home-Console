@@ -1,5 +1,7 @@
 # Deployment
 
+For first-time setup, see [Generate and deploy the telemetry TOML and configure the station INI](configuration-setup.md).
+
 ## macOS
 
 The [developer guide](developer-notes.md) covers first-time setup. From the configured checkout, run:

@@ -36,6 +36,15 @@ def parser():
         sub.add_parser(command)
     config = sub.add_parser("config").add_subparsers(dest="action", required=True)
     config.add_parser("validate")
+    init = config.add_parser("init", help="generate a starter TOML at --config")
+    profile = init.add_mutually_exclusive_group(required=True)
+    profile.add_argument("--mock", action="store_true")
+    profile.add_argument("--sensor-name", help="exact advertised H5074 name")
+    init.add_argument("--room", default="Living room")
+    init.add_argument("--database", help="target SQLite path")
+    init.add_argument("--use-indoor-binding", action="store_true")
+    deploy = config.add_parser("deploy", help="install an existing TOML at --config")
+    deploy.add_argument("source", type=Path)
     providers = sub.add_parser("providers").add_subparsers(dest="action", required=True)
     providers.add_parser("list")
     providers.add_parser("describe").add_argument("type")
@@ -144,6 +153,18 @@ def _status(config, snapshot):
 def _dispatch(args, registry):
     if args.command == "providers":
         return _provider_command(args, registry)
+    if args.command == "config" and args.action in {"init", "deploy"}:
+        from .config_setup import generate, install
+
+        if args.action == "deploy":
+            content = args.source.expanduser().read_bytes()
+        else:
+            content = generate(
+                args.sensor_name, args.room, args.database, args.use_indoor_binding
+            )
+        changed = install(content, args.config, registry)
+        _print("Installed:" if changed else "Already installed:", args.config)
+        return 0
     # Maintenance and status must remain accessible when hardware configuration
     # is incomplete. Strict plugin validation is needed before collection.
     strict = args.command in {"run", "config"}
