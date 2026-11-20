@@ -1,0 +1,24 @@
+[Unit]
+Description=Home Telemetry indoor climate collector
+Wants=network-online.target
+After=network-online.target bluetooth.service
+
+[Service]
+Type=simple
+User=home-telemetry
+Group=home-telemetry
+WorkingDirectory=/opt/home-telemetry
+ConfigurationDirectory=home-telemetry
+StateDirectory=home-telemetry
+StateDirectoryMode=0750
+Environment=HOME_TELEMETRY_CONFIG=/etc/home-telemetry/config.toml
+EnvironmentFile=-/etc/home-telemetry/collector.env
+ExecStart=/opt/home-telemetry/venv/bin/home-telemetry run
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=15s
+NoNewPrivileges=true
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

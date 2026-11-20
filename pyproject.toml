@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weatherflow-home-telemetry"
+version = "0.1.0"
+description = "Pluggable indoor climate collection and SQLite snapshots for PiConsole"
+readme = "docs/architecture.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+
+[project.scripts]
+home-telemetry = "home_telemetry.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["home_telemetry*"]

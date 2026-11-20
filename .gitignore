@@ -17,3 +17,38 @@ graphics/
 
 # Ignore Python virtual environment
 venv/
+
+# Home Telemetry local configuration, credentials and runtime data
+.env
+.env.*
+*.env
+home-telemetry.toml
+config.toml
+*.local.toml
+credentials/
+secrets/
+*credentials*.json
+*client_secret*.json
+*.pem
+*.key
+*.db
+*.sqlite
+*.sqlite3
+*-journal
+*-wal
+*-shm
+*.writer.lock
+*.db.*
+*.sqlite.*
+*.sqlite3.*
+*.bak
+*.backup
+*.egg-info/
+.venv/
+build/
+dist/
+captures/
+*.pcap
+*.pcapng
+*.btsnoop
+exports/

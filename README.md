@@ -279,3 +279,19 @@ Weather Station Template (https://www.weather34.com/homeweatherstation/)
 copyright 2015-2021 Brian Underdown. The Weather34 Home Weather Station Template
 is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0
 International License.
+
+## Home Telemetry in this fork
+
+This fork includes an independent [Home Telemetry collector](docs/architecture.md)
+and an optional Indoor Climate custom panel. The collector normalizes readings
+from pluggable sources and shares them with PiConsole through SQLite. It supports
+multiple providers and rooms, with explicit bindings for primary and fallback
+sources. The current release runs with MockProvider and requires no hardware or
+cloud account. Govee BLE and Nest SDM are scaffolds. WeatherFlow AIR collection
+through Home Telemetry is planned.
+
+See the [offline quick start](docs/architecture.md), [configuration and CLI](docs/configuration.md),
+[storage and retention](docs/database.md), [Raspberry Pi deployment](docs/deployment.md),
+[provider status](docs/providers/README.md), and [contribution guide](docs/provider-development.md).
+The Home Telemetry fork and its provider contributors maintain this extension.
+Report extension issues to the fork’s issue tracker.

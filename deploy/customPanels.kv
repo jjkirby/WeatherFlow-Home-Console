@@ -1,0 +1,22 @@
+<IndoorClimatePanel>:
+    PanelBackground:
+        _panelTitle: 'Indoor Climate'
+    ScrollView:
+        size_hint: (0.92, 0.82)
+        pos_hint: {'center_x': 0.5, 'y': 0.025}
+        do_scroll_x: False
+        Label:
+            text: root.summary
+            markup: False
+            color: (0.87, 0.87, 0.87, 1)
+            font_name: 'fonts/Inter-Medium.ttf'
+            font_size: max(dp(11), dp(13) * app.scaleFactor)
+            text_size: (self.width, None)
+            size_hint_y: None
+            height: self.texture_size[1] + dp(8)
+            halign: 'left'
+
+<IndoorClimateButton>:
+    PanelButton:
+        text: 'Indoor'
+        on_release: app.CurrentConditions.switchPanel(self)

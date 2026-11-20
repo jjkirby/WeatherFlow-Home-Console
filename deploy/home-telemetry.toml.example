@@ -1,0 +1,66 @@
+[collector]
+database = "~/.local/share/home-telemetry/telemetry.db"
+cleanup_seconds = 60
+
+[[providers]]
+id = "demo-main"
+type = "mock"
+device_id = "demo-thermometer-a"
+display_name = "Demo thermometer"
+room = "Demo room"
+priority = 10
+stale_seconds = 20
+heartbeat_seconds = 60
+retention_days = "unlimited"
+
+[providers.settings]
+interval_seconds = 5
+temperature_c = 21.5
+humidity_percent = 45
+vary = true
+
+[[providers]]
+id = "demo-backup"
+type = "mock"
+device_id = "demo-thermometer-b"
+display_name = "Demo backup"
+room = "Demo room"
+priority = 20
+stale_seconds = 30
+retention_days = 30
+
+[[providers]]
+id = "demo-upstairs"
+type = "mock"
+device_id = "demo-thermometer-c"
+display_name = "Demo upstairs"
+room = "Demo upstairs"
+priority = 30
+stale_seconds = 30
+
+[[providers]]
+id = "future-govee"
+type = "govee_ble"
+enabled = false
+
+[[providers]]
+id = "future-nest"
+type = "nest_sdm"
+enabled = false
+retention_days = 10
+
+[bindings.indoor]
+primary = "demo-main"
+fallbacks = ["demo-backup"]
+capability = "temperature"
+room = "Demo room"
+allow_cross_room = false
+max_age_seconds = 30
+
+[bindings.upstairs_humidity]
+primary = "demo-upstairs"
+capability = "humidity"
+room = "Demo upstairs"
+
+[panel]
+sources = ["demo-main", "demo-backup", "demo-upstairs"]
