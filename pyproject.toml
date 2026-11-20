@@ -10,6 +10,9 @@ readme = "docs/architecture.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}
 
+[project.optional-dependencies]
+govee = ["bleak>=0.22,<4"]
+
 [project.scripts]
 home-telemetry = "home_telemetry.cli:main"
 

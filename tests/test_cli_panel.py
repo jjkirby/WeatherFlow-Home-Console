@@ -25,14 +25,14 @@ from test_selection_models import NOW, observation
 
 
 class CliTests(unittest.TestCase):
-    def test_provider_discover_and_scaffolds(self):
+    def test_provider_discovery_availability(self):
         capture = io.StringIO()
         with redirect_stdout(capture):
             self.assertEqual(main(["providers", "discover", "mock"]), 0)
             self.assertEqual(main(["providers", "discover", "govee_ble"]), 1)
             self.assertEqual(main(["providers", "discover", "nest_sdm"]), 1)
         self.assertIn("discovery", capture.getvalue())
-        self.assertIn("verified sensor model", capture.getvalue())
+        self.assertIn("does not support discovery", capture.getvalue())
         self.assertIn("authorization", capture.getvalue())
 
     def test_run_status_selection_sigterm_and_maintenance(self):

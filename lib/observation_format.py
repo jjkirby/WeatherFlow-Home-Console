@@ -470,14 +470,11 @@ def format(Obs, obType, config=[]):
                         cObs[ii - 1] = '-'
                     else:
                         Tz = pytz.timezone(config['Station']['Timezone'])
+                        local_time = datetime.fromtimestamp(cObs[ii - 1], Tz)
                         if config['Display']['TimeFormat'] == '12 hr':
-                            if config['System']['Hardware'] == 'Other':
-                                Format = '%#I:%M %p'
-                            else:
-                                Format = '%-I:%M %p'
+                            cObs[ii - 1] = local_time.strftime('%I:%M %p').lstrip('0')
                         else:
-                            Format = '%H:%M'
-                        cObs[ii - 1] = datetime.fromtimestamp(cObs[ii - 1], Tz).strftime(Format)
+                            cObs[ii - 1] = local_time.strftime('%H:%M')
 
         # Format time difference observations
         elif Type == 'TimeDelta':

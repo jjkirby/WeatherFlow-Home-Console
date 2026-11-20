@@ -2,11 +2,12 @@
 
 from contextlib import closing, contextmanager
 from dataclasses import dataclass, field, replace
-from datetime import datetime
+from datetime import date, datetime, time, timedelta, timezone
 from enum import StrEnum
 import fcntl
 from pathlib import Path
 import sqlite3
+from zoneinfo import ZoneInfo
 
 from ..config import Binding, DEFAULT_DATABASE
 from ..exceptions import SchemaError
@@ -120,6 +121,16 @@ class Snapshot:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class IndoorTemperature:
+    day: date
+    binding: Binding | None = None
+    sensor: tuple[str, str] | None = None
+    current: IndoorClimateObservation | None = None
+    minimum: IndoorClimateObservation | None = None
+    maximum: IndoorClimateObservation | None = None
+
+
 class SnapshotReader:
     def __init__(self, path=DEFAULT_DATABASE, *, busy_timeout_ms=READER_TIMEOUT_MS):
         self.path = Path(path).expanduser().resolve()
@@ -176,45 +187,7 @@ class SnapshotReader:
             with self._connection() as connection:
                 version = schema_version(connection)
                 require_schema(connection)
-                data = queries.settings(connection)
-                sources = queries.sources(connection, now)
-                observations = queries.latest(connection, sources, now)
-            runtime = data.get("runtime", {})
-            heartbeat = parse_time(runtime.get("heartbeat"))
-            running = bool(
-                runtime.get("running")
-                and heartbeat
-                and 0 <= (now - heartbeat).total_seconds() <= LEASE_SECONDS
-            )
-            if not running:
-                sources = {
-                    name: (
-                        replace(
-                            source,
-                            health=replace(source.health, status=HealthStatus.STOPPED),
-                        )
-                        if source.health.status
-                        in {
-                            HealthStatus.HEALTHY,
-                            HealthStatus.DEGRADED,
-                            HealthStatus.STARTING,
-                        }
-                        else source
-                    )
-                    for name, source in sources.items()
-                }
-            panel = data.get("panel_sources")
-            return Snapshot(
-                SnapshotState.READY if observations else SnapshotState.EMPTY,
-                now,
-                "" if observations else "Waiting for observations",
-                version,
-                running,
-                sources,
-                {key: tuple(value) for key, value in observations.items()},
-                queries.bindings(data),
-                tuple(panel) if panel is not None else None,
-            )
+                return self._read_snapshot(connection, now, version)
         except SchemaError as error:
             return Snapshot(SnapshotState.INCOMPATIBLE, now, str(error), version)
         except sqlite3.Error as error:
@@ -240,6 +213,114 @@ class SnapshotReader:
             return Snapshot(
                 SnapshotState.UNAVAILABLE, now, "Invalid telemetry data", version
             )
+
+    @staticmethod
+    def _read_snapshot(connection, now, version):
+        data = queries.settings(connection)
+        sources = queries.sources(connection, now)
+        observations = queries.latest(connection, sources, now)
+        runtime = data.get("runtime", {})
+        heartbeat = parse_time(runtime.get("heartbeat"))
+        running = bool(
+            runtime.get("running")
+            and heartbeat
+            and 0 <= (now - heartbeat).total_seconds() <= LEASE_SECONDS
+        )
+        if not running:
+            sources = {
+                name: (
+                    replace(
+                        source,
+                        health=replace(source.health, status=HealthStatus.STOPPED),
+                    )
+                    if source.health.status
+                    in {
+                        HealthStatus.HEALTHY,
+                        HealthStatus.DEGRADED,
+                        HealthStatus.STARTING,
+                    }
+                    else source
+                )
+                for name, source in sources.items()
+            }
+        panel = data.get("panel_sources")
+        return Snapshot(
+            SnapshotState.READY if observations else SnapshotState.EMPTY,
+            now,
+            "" if observations else "Waiting for observations",
+            version,
+            running,
+            sources,
+            {key: tuple(value) for key, value in observations.items()},
+            queries.bindings(data),
+            tuple(panel) if panel is not None else None,
+        )
+
+    def indoor_temperature(self, station_timezone, previous=None, *, now=None):
+        """Read the indoor binding and that device's station-day extrema atomically."""
+        now = now or utc_now()
+        zone = ZoneInfo(station_timezone)
+        day = now.astimezone(zone).date()
+        start = datetime.combine(day, time.min, zone).astimezone(timezone.utc)
+        end = datetime.combine(day + timedelta(days=1), time.min, zone).astimezone(
+            timezone.utc
+        )
+        try:
+            if not self.path.exists():
+                return None
+            with self._connection() as connection:
+                require_schema(connection)
+                snapshot = self._read_snapshot(
+                    connection, now, schema_version(connection)
+                )
+                binding = snapshot.bindings.get("indoor")
+                if binding is None or binding.capability != Capability.TEMPERATURE:
+                    return IndoorTemperature(day)
+
+                selected = snapshot.selected("indoor").selected
+                current = selected.observation if selected else None
+                if current is not None:
+                    sensor = (current.provider_id, current.device_id)
+                elif (
+                    previous is not None
+                    and previous.binding == binding
+                    and previous.sensor is not None
+                    and previous.sensor[0] in snapshot.sources
+                    and snapshot.sources[previous.sensor[0]].enabled
+                ):
+                    # No fresh fallback took over. Keep the previous device's extrema.
+                    sensor = previous.sensor
+                else:
+                    # A console started while the sensor is stale can still show
+                    # today's history using the binding's usual ordering and room rules.
+                    historical = select(
+                        binding,
+                        snapshot.sources,
+                        snapshot.observations,
+                        now,
+                        historical=True,
+                    ).selected
+                    if historical is None:
+                        return IndoorTemperature(day, binding)
+                    obs = historical.observation
+                    sensor = (obs.provider_id, obs.device_id)
+                source = snapshot.sources[sensor[0]]
+                minimum, maximum = queries.temperature_extrema(
+                    connection, source, sensor[1], start, end, now
+                )
+                return IndoorTemperature(
+                    day, binding, sensor, current, minimum, maximum
+                )
+        except (
+            OSError,
+            sqlite3.Error,
+            SchemaError,
+            ValueError,
+            TypeError,
+            KeyError,
+            OverflowError,
+        ):
+            return None
 
     def recent_history(self, provider_id, *, limit=100, now=None):
         if type(limit) is not int or not 1 <= limit <= 10000:

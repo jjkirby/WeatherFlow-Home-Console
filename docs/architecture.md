@@ -4,7 +4,7 @@ Home Telemetry is an open-source extension maintained in the WeatherFlow Home Co
 
 A provider owns its connection and authentication. It declares capabilities, then pushes normalized observations and health updates into the coordinator. The coordinator validates configuration before starting tasks and supervises each task independently. SQLite stores the current observation for each device, history, provider health, and the public portion of source configuration. The read-only snapshot API computes freshness and selection using one consistent SQLite transaction. No provider settings or credentials are part of that contract.
 
-Mock is implemented for offline development. Govee BLE and Nest SDM are scaffolds. WeatherFlow AIR collection is planned. See [provider status](providers/README.md), [configuration](configuration.md), [storage](database.md), [deployment](deployment.md), and [provider development](provider-development.md).
+Mock is implemented for offline development. Govee BLE supports the H5074 with an optional Bluetooth dependency. Nest SDM is a scaffold, and WeatherFlow AIR collection is planned. See [provider status](providers/README.md), [configuration](configuration.md), [storage](database.md), [deployment](deployment.md), and [provider development](provider-development.md).
 
 ## Offline quick start
 

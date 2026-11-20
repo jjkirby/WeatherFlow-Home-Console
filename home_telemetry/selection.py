@@ -73,7 +73,7 @@ def reading_status(source, observation, now, max_age=None):
     return ReadingStatus.FRESH
 
 
-def select(binding, sources, observations, now: datetime):
+def select(binding, sources, observations, now: datetime, *, historical=False):
     ordered = ((binding.primary,) if binding.primary else ()) + binding.fallbacks
     if ordered:
         preferred = sources.get(ordered[0])
@@ -134,13 +134,21 @@ def select(binding, sources, observations, now: datetime):
             reason = "room mismatch or room unknown"
         for observation in candidates:
             status = reading_status(source, observation, now, binding.max_age_seconds)
-            if status != ReadingStatus.FRESH:
+            if status != ReadingStatus.FRESH and not historical:
                 reason = status.value
                 continue
-            if not observation.supports_value(binding.capability):
+            if (
+                observation.quality == DataQuality.INVALID
+                or not observation.supports_value(binding.capability)
+            ):
                 reason = "required measurement missing"
                 continue
-            explanations.append((key, "fresh reading selected"))
+            reason = (
+                "fresh reading selected"
+                if status == ReadingStatus.FRESH
+                else "historical source selected"
+            )
+            explanations.append((key, reason))
             return Decision(Reading(source, observation, status), tuple(explanations))
         explanations.append((key, reason))
     return Decision(None, tuple(explanations))

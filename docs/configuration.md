@@ -21,6 +21,19 @@ A `[bindings.indoor]` table can set `primary`, ordered `fallbacks`, `room`, `cap
 
 For explicit sources, the order in the binding takes precedence over priority. Without a room, the first preferred source anchors the room where known. If its room is unknown, an alternate cannot establish a same-room match. Set `allow_cross_room = true` to permit another room. Selection checks declared capability, a corresponding measurement, device connectivity, data quality, provider health, and the tighter of the provider and binding age limits. Healthy and degraded providers can serve fresh readings. The result identifies the source or supplies rejection reasons. The panel uses `[panel].sources` in the supplied order and defaults to every enabled provider.
 
+## Built-in Temperature panel
+
+WeatherFlow AIR supplies the built-in Indoor column by default. To use Home Telemetry, add the following to the same TOML file used by the collector. The `indoor` binding must have temperature capability.
+
+```toml
+[console]
+use_indoor_binding = true
+```
+
+Set `HOME_TELEMETRY_CONFIG` to that file when starting PiConsole. The bridge uses `collector.database` unless `HOME_TELEMETRY_DB` overrides it. The collector must have started with that database and the intended `indoor` binding so the reader can use the binding stored in SQLite. In PiConsole, enable **Menu → Settings → Display → Indoor temperature** if the Indoor column is hidden.
+
+The current value follows the same fresh source as `selection explain indoor`. Min and max are calculated from valid stored observations for that exact provider and device since station-local midnight. A stale current value shows the usual placeholder. If there is no fresh fallback, the display keeps the prior device's valid extrema for that day. A fresh fallback takes over all three fields. To restore AIR, set `use_indoor_binding = false` or remove the option and relaunch PiConsole.
+
 ## Commands
 
 Run these as `home-telemetry [--config PATH] COMMAND` or `python3 -m home_telemetry [--config PATH] COMMAND`.

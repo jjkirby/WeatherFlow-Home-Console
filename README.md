@@ -22,6 +22,12 @@ please checkout the WeatherFlow community forums: https://community.weatherflow.
 https://weatherflow.com/tempest-weather-system/<br/>
 https://community.weatherflow.com/
 
+## Indoor telemetry in this fork
+
+WeatherFlow Home Console extends Pete Davis’s PiConsole with a separate indoor sensor collector and local SQLite history. Choose a sensor for the built-in Temperature panel to display its current reading and daily low and high with their times. The optional Indoor Climate panel shows individual sensors and freshness.
+
+**Run on Mac.** After [first-time setup](docs/developer-notes.md) and [H5074 configuration](docs/providers/govee.md), run `./scripts/start-mac.sh` from the checkout. See the [verified display](docs/developer-notes.md#what-this-fork-adds) and [launcher behavior](docs/deployment.md#macos).
+
 ## Contents
 
 **[Compatibility](#compatibility)**<br>
@@ -287,8 +293,8 @@ and an optional Indoor Climate custom panel. The collector normalizes readings
 from pluggable sources and shares them with PiConsole through SQLite. It supports
 multiple providers and rooms, with explicit bindings for primary and fallback
 sources. The current release runs with MockProvider and requires no hardware or
-cloud account. Govee BLE and Nest SDM are scaffolds. WeatherFlow AIR collection
-through Home Telemetry is planned.
+cloud account. The optional [Govee H5074 provider](docs/providers/govee.md) uses
+Bluetooth. Nest SDM is a scaffold, and WeatherFlow AIR collection is planned.
 
 See the [offline quick start](docs/architecture.md), [configuration and CLI](docs/configuration.md),
 [storage and retention](docs/database.md), [Raspberry Pi deployment](docs/deployment.md),

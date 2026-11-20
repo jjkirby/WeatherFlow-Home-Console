@@ -49,6 +49,7 @@ class Config:
     bindings: dict[str, Binding]
     panel_sources: tuple[str, ...] | None
     cleanup_seconds: float
+    use_indoor_binding: bool = False
 
 
 def _table(raw, allowed, where):
@@ -234,7 +235,9 @@ def load_config(path=DEFAULT_CONFIG, *, env=None, registry=None, resolve_setting
         raise ConfigurationError(
             "configuration file contains invalid TOML or UTF-8"
         ) from None
-    _table(raw, {"collector", "providers", "bindings", "panel"}, "configuration")
+    _table(
+        raw, {"collector", "providers", "bindings", "panel", "console"}, "configuration"
+    )
     collector = _table(
         raw.get("collector", {}), {"database", "cleanup_seconds"}, "collector"
     )
@@ -272,12 +275,24 @@ def load_config(path=DEFAULT_CONFIG, *, env=None, registry=None, resolve_setting
         if "sources" in panel
         else None
     )
+    console = _table(raw.get("console", {}), {"use_indoor_binding"}, "console")
+    use_indoor = _bool(
+        console.get("use_indoor_binding", False), "console.use_indoor_binding"
+    )
+    if use_indoor and (
+        "indoor" not in parsed_bindings
+        or parsed_bindings["indoor"].capability != Capability.TEMPERATURE
+    ):
+        raise ConfigurationError(
+            "console.use_indoor_binding: requires bindings.indoor with temperature capability"
+        )
     config = Config(
         database,
         providers,
         parsed_bindings,
         panel_sources,
         _positive(collector.get("cleanup_seconds", 60), "collector.cleanup_seconds"),
+        use_indoor,
     )
     if registry is not None:
         for provider in providers:

@@ -89,9 +89,11 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.providers[0].retention_days, 10)
         self.assertEqual(config.providers[0].settings, {})
 
-    def test_enabled_scaffold_and_invalid_mock_settings(self):
+    def test_invalid_govee_and_mock_settings(self):
         registry = Registry(external=False)
-        with self.assertRaisesRegex(ConfigurationError, "Not implemented"):
+        with self.assertRaisesRegex(
+            ConfigurationError, r"fake-a.settings\.sensor_name"
+        ):
             self.read(MOCK.replace('"mock"', '"govee_ble"'), registry=registry)
         with self.assertRaisesRegex(ConfigurationError, r"fake-a.settings\.fail_after"):
             self.read(
@@ -160,5 +162,5 @@ class RegistryTests(unittest.TestCase):
                 self.assertIn(f'type = "{kind}"', contents)
                 if registry.describe(kind).status != "installed":
                     self.assertIn("enabled = false", contents)
-        self.assertIn("None verified", Path("docs/providers/govee.md").read_text())
+        self.assertIn("H5074", Path("docs/providers/govee.md").read_text())
         self.assertFalse(os.path.exists("deploy/collector.env"))

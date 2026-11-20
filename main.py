@@ -194,6 +194,14 @@ class wfpiconsole(App):
         self.screen_manager = screenManager(transition=NoTransition())
         self.screen_manager.add_widget(CurrentConditions())
 
+        self.indoor_telemetry = None
+        try:
+            from home_telemetry.console import start_indoor_temperature
+        except ImportError:
+            pass
+        else:
+            self.indoor_telemetry = start_indoor_temperature(self, Clock, Logger)
+
         # Start Websocket or UDP service
         self.start_connection_service()
 
@@ -213,6 +221,8 @@ class wfpiconsole(App):
     # DISCONNECT connection_client WHEN CLOSING APP
     # --------------------------------------------------------------------------
     def on_stop(self):
+        if getattr(self, 'indoor_telemetry', None) is not None:
+            self.indoor_telemetry.stop()
         self.stop_connection_service()
 
     # SET DISPLAY SCALE FACTOR BASED ON SCREEN DIMENSIONS

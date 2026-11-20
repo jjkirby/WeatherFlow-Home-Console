@@ -656,6 +656,9 @@ class obs_parser():
         # Update display values with new derived observations
         reference_error = False
         for key, value in list(self.display_obs.items()):
+            if (getattr(self.app, 'indoor_telemetry', None) is not None
+                    and key in ('inTemp', 'inTempMin', 'inTempMax')):
+                continue
             if not (ob_type == 'obs_all' and 'rapid' in key):
                 try:                                                            # Don't update rapidWind display when type is 'all'
                     self.app.CurrentConditions.Obs[key] = value                 # as the RapidWind rose is not animated in this case

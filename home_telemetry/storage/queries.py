@@ -5,10 +5,12 @@ import json
 from ..config import Binding
 from ..models import (
     Capability,
+    DataQuality,
     HealthStatus,
     IndoorClimateObservation,
     ProviderHealth,
     parse_time,
+    utc_text,
 )
 from ..selection import Source
 from .retention import expired
@@ -111,3 +113,34 @@ def history(connection, source, now, limit):
         if item is not None:
             observations.append(item)
     return tuple(observations)
+
+
+def temperature_extrema(connection, source, device_id, start, end, now):
+    """Return the extrema for one device, with the earliest timestamp on ties."""
+    lower, upper, through = (utc_text(value) for value in (start, end, now))
+    params = (source.id, device_id, lower, upper, through)
+    rows = connection.execute(
+        """SELECT provider_id,device_id,observed_at,received_at,payload FROM observations
+           WHERE provider_id=? AND device_id=?
+             AND observed_at>=? AND observed_at<? AND observed_at<=?
+           UNION ALL
+           SELECT provider_id,device_id,observed_at,received_at,payload FROM latest
+           WHERE provider_id=? AND device_id=?
+             AND observed_at>=? AND observed_at<? AND observed_at<=?
+           ORDER BY observed_at,received_at""",
+        params * 2,
+    )
+    minimum = maximum = None
+    for row in rows:
+        item = _observation(row, source, now)
+        if (
+            item is None
+            or item.quality == DataQuality.INVALID
+            or item.temperature_c is None
+        ):
+            continue
+        if minimum is None or item.temperature_c < minimum.temperature_c:
+            minimum = item
+        if maximum is None or item.temperature_c > maximum.temperature_c:
+            maximum = item
+    return minimum, maximum
