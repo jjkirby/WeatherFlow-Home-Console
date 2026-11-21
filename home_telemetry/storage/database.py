@@ -2,12 +2,12 @@
 
 from contextlib import closing, contextmanager
 from dataclasses import asdict
-import fcntl
 import json
 import os
 from pathlib import Path
 import sqlite3
 
+from ..storage.file_lock import acquire
 from ..exceptions import ConfigurationError, WriterBusy
 from ..models import HealthStatus, parse_time, utc_text
 from .migrations import migrate
@@ -23,7 +23,7 @@ def writer_lock(path):
     lock_path = path.with_name(path.name + ".writer.lock")
     with os.fdopen(os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o640), "r+b") as lock:
         try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            acquire(lock, shared=False)
         except BlockingIOError:
             raise WriterBusy(
                 "collector or database maintenance owns the writer lock"

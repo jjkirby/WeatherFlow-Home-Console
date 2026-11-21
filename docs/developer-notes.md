@@ -10,77 +10,9 @@ The collector writes readings to SQLite. The Indoor Climate panel shows each con
 
 On the Mac Studio, the built-in panel showed **72.2°F indoors**, a low of **72.1°F at 14:22**, and a high of **73.1°F at 14:06**. The outdoor Tempest reading was **62.2°F**. The times follow the station timezone and console time format.
 
-## Choose your starting point
+## Prepare the development environment
 
-| Goal | Start here |
-|---|---|
-| Install the original console on a Raspberry Pi or configure a weather station | [README compatibility](../README.md#compatibility) and [installation instructions](../README.md#installation-instructions) |
-| Run the fork on a development machine | Follow the checkout and mock test below. Add the optional desktop display to see the full result. |
-| Deploy the fork on a Pi | Use the [fork deployment guide](deployment.md). Deploy a tested fork revision; the stock updater targets upstream. |
-| Add a sensor type | Start with [provider development](provider-development.md). PiConsole’s [custom panel API](../README.md#advanced-custom-panels) covers changes to the display itself. |
-
-Run the commands below from the fork’s repository root after cloning.
-
-## Check out the project
-
-Use the `feature/home-telemetry` branch. Use a revision that includes the H5074 provider and Mac launcher for the live test. If you already have the fork open in VS Code, check your branch with `git branch --show-current` and continue to the next section.
-
-```bash
-git clone --branch feature/home-telemetry https://github.com/jjkirby/WeatherFlow-Home-Console.git
-cd WeatherFlow-Home-Console
-```
-
-## Set up Python
-
-Use Python 3.11 or 3.12 for the telemetry extension. Choose the section for your shell, then continue with the shared install and tests.
-
-### Windows (PowerShell)
-
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks activation, use `.\.venv\Scripts\python.exe` wherever the shared commands say `python`. This works with your existing execution policy. For upstream Windows setup details, see [Advanced Windows Installation](../README.md#advanced-installation-windows).
-
-### Linux (Bash)
-
-Use an installed Python 3.11 or 3.12 interpreter. For example, with Python 3.12:
-
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-```
-
-On Ubuntu or Debian, if creation fails because `ensurepip` is unavailable, install the matching distribution package (for example, `python3.12-venv` for distribution Python 3.12). Use a graphical desktop session for the optional display test. The collector and CLI also run from a terminal.
-
-### macOS (zsh or Bash)
-
-The six-panel display test used Python 3.12.5 and Kivy 2.3.2 on a Mac Studio.
-
-```bash
-python3 --version
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### Install the framework on all platforms
-
-```sh
-python -m pip install -e .
-python -m home_telemetry providers list
-```
-
-The provider list should show `mock` as installed. Activate this environment in each new terminal.
-
-## Run the offline tests
-
-```bash
-python -m unittest discover -s tests
-python -m home_telemetry --config deploy/home-telemetry.toml.example config validate
-```
-
-The H5074 and built-in Indoor integration passed 46 offline tests on both Python 3.11 and 3.12. The configuration check should print `Configuration valid`. These checks require no Tempest token, Bluetooth sensor, Nest credentials, or open PiConsole window.
+Use the mock smoke test and offline suite in the [platform setup guide](../setup.md#development-and-acceptance-tests). For source-selection diagnostics, run the collector and reader separately as shown below.
 
 ## Smoke-test the mock collector
 
@@ -104,38 +36,7 @@ Expect `Collector: running`, three healthy and fresh mock providers, and `Select
 
 ## Open the desktop display
 
-Install the display dependencies in the same virtual environment. Check the repository README for dependency changes when working from a newer revision.
-
-```bash
-python -m pip install 'kivy[base]' websockets numpy pytz tzlocal ephem packaging pyOpenSSL certifi
-python -c 'import kivy, websockets, numpy, pytz, tzlocal, ephem, packaging, OpenSSL, certifi; print(kivy.__version__)'
-```
-
-For live outdoor weather, complete [PiConsole’s first-run station setup](../README.md#configure-and-run-weatherflow-piconsole), or use a copy of your own existing `wfpiconsole.ini`. Keep the original as a backup because startup can migrate the copy. Station credentials belong in the private INI. Indoor providers and room bindings use [Home Telemetry’s TOML configuration](configuration.md).
-
-Confirm Git ignores the runtime files before adding credentials or installing the custom panel. Each listed path should have a matching rule.
-
-```bash
-git check-ignore -v wfpiconsole.ini user/customPanels.py user/customPanels.kv .venv/
-```
-
-Install the panel before launching PiConsole. If either destination already exists, inspect and back up the existing pair before updating it. On macOS or Linux, the following commands preserve existing files.
-
-```bash
-cp -n deploy/customPanels.py user/customPanels.py
-cp -n deploy/customPanels.kv user/customPanels.kv
-ls -l user/customPanels.py user/customPanels.kv
-```
-
-On Windows, run this in PowerShell from the repository root. It copies the pair only when both destinations are free.
-
-```powershell
-if ((Test-Path user/customPanels.py) -or (Test-Path user/customPanels.kv)) {
-    Write-Warning 'Existing panel files found. Review the pair before installing.'
-} else {
-    Copy-Item deploy/customPanels.py, deploy/customPanels.kv -Destination user/
-}
-```
+Use the wizard to install the desktop packages and custom panel. For a live station, follow the [station INI guide](configuration-setup.md#how-piconsole-creates-and-populates-the-ini).
 
 Keep Terminal 1 running the collector. In Terminal 2 on Windows or Linux, launch the display with `python main.py`. On macOS, use this launch command if Retina scaling makes labels overlap.
 

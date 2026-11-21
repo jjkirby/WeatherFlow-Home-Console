@@ -4,7 +4,7 @@ from contextlib import closing, contextmanager
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime, time, timedelta, timezone
 from enum import StrEnum
-import fcntl
+from ..storage.file_lock import acquire
 from pathlib import Path
 import sqlite3
 from zoneinfo import ZoneInfo
@@ -149,7 +149,7 @@ class SnapshotReader:
         if lock is not None:
             with lock:
                 try:
-                    fcntl.flock(lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                    acquire(lock, shared=True)
                 except OSError:
                     pass
                 else:

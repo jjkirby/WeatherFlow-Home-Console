@@ -41,7 +41,7 @@ class CliTests(unittest.TestCase):
             db = path.with_name("climate.db")
             example = Path("deploy/home-telemetry.toml.example").read_text()
             path.write_text(
-                example.replace("~/.local/share/home-telemetry/telemetry.db", str(db))
+                example.replace("~/.local/share/home-telemetry/telemetry.db", db.as_posix())
             )
             command = [
                 sys.executable,
@@ -52,7 +52,8 @@ class CliTests(unittest.TestCase):
                 str(path),
             ]
             collector = subprocess.Popen(
-                command + ["run"],
+                command + ["run", "--parent-pipe"] if os.name == "nt" else command + ["run"],
+                stdin=subprocess.PIPE if os.name == "nt" else None,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
@@ -83,7 +84,11 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(locked.returncode, 1)
             finally:
                 if collector.poll() is None:
-                    collector.send_signal(signal.SIGTERM)
+                    if os.name == "nt":
+                        collector.stdin.close()
+                        collector.stdin = None
+                    else:
+                        collector.send_signal(signal.SIGTERM)
                 try:
                     _, errors = collector.communicate(timeout=5)
                 except subprocess.TimeoutExpired:

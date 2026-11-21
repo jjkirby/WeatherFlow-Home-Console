@@ -19,7 +19,7 @@ Credential fields inside `[providers.settings]` must reference environment varia
 
 ## Bindings and panel sources
 
-A `[bindings.indoor]` table can set `primary`, ordered `fallbacks`, `room`, `capability`, `max_age_seconds`, and `allow_cross_room`. Other binding names work the same way. For example, an eventual Govee provider can serve a living-room binding, a same-room sensor can be its first fallback, and a Nest in the entryway can be a further fallback when you explicitly enable cross-room selection. An upstairs binding can select its own sensor independently.
+A `[bindings.indoor]` table can set `primary`, ordered `fallbacks`, `room`, `capability`, `max_age_seconds`, and `allow_cross_room`. Other binding names work the same way. For example, a configured Govee provider can serve a living-room binding, a same-room sensor can be its first fallback, and a Nest in the entryway can be a further fallback when you explicitly enable cross-room selection. An upstairs binding can select its own sensor independently.
 
 For explicit sources, the order in the binding takes precedence over priority. Without a room, the first preferred source anchors the room where known. If its room is unknown, an alternate cannot establish a same-room match. Set `allow_cross_room = true` to permit another room. Selection checks declared capability, a corresponding measurement, device connectivity, data quality, provider health, and the tighter of the provider and binding age limits. Healthy and degraded providers can serve fresh readings. The result identifies the source or supplies rejection reasons. The panel uses `[panel].sources` in the supplied order and defaults to every enabled provider.
 

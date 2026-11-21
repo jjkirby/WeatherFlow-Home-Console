@@ -1,5 +1,47 @@
 # WeatherFlow PiConsole
 
+<!-- weatherflow-fork-intro -->
+## WeatherFlow Home Console enhancements
+
+Display live Tempest weather alongside indoor temperature from a Govee H5074 Bluetooth sensor. This fork extends Pete Davis’s WeatherFlow PiConsole. The Indoor column can show the current reading and today’s low and high with their times. Existing WeatherFlow indoor AIR installations keep their default source.
+
+## Install and run
+
+Download and extract this fork or clone its `feature/home-telemetry` branch. Open a terminal in the folder containing `main.py` and run the command for your machine.
+
+| Platform | Command |
+| --- | --- |
+| Raspberry Pi OS Desktop, macOS, or Linux desktop | `./scripts/setup.sh` |
+| Windows 11 x64 · PowerShell | `.\scripts\setup-windows.cmd` |
+
+Follow the prompts to select your Govee or try a simulated sensor. Reuse your station settings or choose guided station setup for live weather. On a Pi, run from the desktop to see the preview. **[Setup guide and troubleshooting](setup.md)**
+
+## Power users and developers
+
+You can develop with a simulated sensor or deploy a live display on a Pi or desktop. The Govee H5074 has been verified on a Mac Studio. Google Nest is planned. The guides below cover testing, deployment, and adding providers.
+
+| File | When to use it |
+| --- | --- |
+| [README.md](README.md) | Install this fork and find a guide. |
+| [setup.md](setup.md) | Check host compatibility, Python and native libraries. Find config and data paths or troubleshoot setup. |
+| [docs/setup.md](docs/setup.md) | Walk through station setup, preview the display, and enable or roll back Pi desktop autostart. |
+| [docs/windows-setup.md](docs/windows-setup.md) | Prepare a clean Windows PC, check Python and WinGet, and verify the native display and Bluetooth. |
+| [docs/upstream-piconsole.md](docs/upstream-piconsole.md) | Pete Davis’s original console instructions, hardware compatibility, panel API, updates, and credits. |
+| [docs/developer-notes.md](docs/developer-notes.md) | Inspect the mock collector and a live display, compare readings, and reproduce the Mac hardware test. |
+| [docs/architecture.md](docs/architecture.md) | Trace observations from a provider through the collector and SQLite to the display. |
+| [docs/configuration-setup.md](docs/configuration-setup.md) | Generate, validate, or deploy a private sensor TOML and populate the station INI. |
+| [docs/configuration.md](docs/configuration.md) | Look up TOML fields, room bindings, fallback rules, and CLI commands. |
+| [docs/database.md](docs/database.md) | Inspect the SQLite schema, locking, snapshot reader, and retention rules. |
+| [docs/deployment.md](docs/deployment.md) | Run the collector as a service, configure display access, and maintain an installation. |
+| [docs/providers/README.md](docs/providers/README.md) | Check provider availability and find the individual integration guides. |
+| [docs/providers/govee.md](docs/providers/govee.md) | Identify an H5074, diagnose missing Bluetooth readings, and verify the indoor display. |
+| [docs/providers/mock.md](docs/providers/mock.md) | Configure simulated readings, stale data, and failures for testing. |
+| [docs/providers/nest.md](docs/providers/nest.md) | Review the planned Google Nest integration, authorization requirements, and implementation status. |
+| [docs/providers/weatherflow_air.md](docs/providers/weatherflow_air.md) | Understand the built-in WeatherFlow AIR source and the proposed collector plugin. |
+| [docs/provider-development.md](docs/provider-development.md) | Implement, register, and test an additional indoor sensor provider. |
+| [.github/ISSUE_TEMPLATE/bug_report.md](.github/ISSUE_TEMPLATE/bug_report.md) | Report a reproducible problem and include the relevant environment details. |
+<!-- /weatherflow-fork-intro -->
+
 <a href="https://www.buymeacoffee.com/peted.davis" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 
 The WeatherFlow PiConsole is a Python console that displays the data collected

@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 import signal
 import sqlite3
+import sys
+import threading
 
 from .config import DEFAULT_CONFIG, ProviderConfig, load_config
 from .coordinator import Coordinator
@@ -32,8 +34,9 @@ def parser():
         default=os.environ.get("HOME_TELEMETRY_CONFIG", DEFAULT_CONFIG),
     )
     sub = cli.add_subparsers(dest="command", required=True)
-    for command in ("run", "status"):
-        sub.add_parser(command)
+    collect = sub.add_parser("run")
+    collect.add_argument("--parent-pipe", action="store_true", help=argparse.SUPPRESS)
+    sub.add_parser("status")
     config = sub.add_parser("config").add_subparsers(dest="action", required=True)
     config.add_parser("validate")
     init = config.add_parser("init", help="generate a starter TOML at --config")
@@ -65,15 +68,25 @@ def _print(*values):
     print(*(redact(value) for value in values))
 
 
-async def _run(config, registry):
+def _wait_for_parent(loop, stop):
+    # A managed collector receives EOF when its launcher closes the pipe or exits.
+    os.read(sys.stdin.fileno(), 1)
+    if not loop.is_closed():
+        loop.call_soon_threadsafe(stop.set)
+
+
+async def _run(config, registry, parent_pipe=False):
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
-    for sig in (signal.SIGINT, signal.SIGTERM):
+    signals = () if os.name == "nt" else (signal.SIGINT, signal.SIGTERM)
+    if parent_pipe:
+        threading.Thread(target=_wait_for_parent, args=(loop, stop), daemon=True).start()
+    for sig in signals:
         loop.add_signal_handler(sig, stop.set)
     try:
         await Coordinator(config, registry).run(stop)
     finally:
-        for sig in (signal.SIGINT, signal.SIGTERM):
+        for sig in signals:
             loop.remove_signal_handler(sig)
 
 
@@ -175,7 +188,7 @@ def _dispatch(args, registry):
         _print("Configuration valid")
         return 0
     if args.command == "run":
-        asyncio.run(_run(config, registry))
+        asyncio.run(_run(config, registry, args.parent_pipe))
         return 0
     if args.command == "db" and args.action in {"migrate", "purge"}:
         with open_writer(config.database) as db:
